@@ -44,6 +44,7 @@ class AdminPanelProvider extends PanelProvider
                 // AccountWidget::class
             ])
             ->unsavedChangesAlerts()
+            ->brandName('')
             ->brandLogo(fn() => view('filament.app.logo'))
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->brandLogoHeight('1.25rem')
