@@ -2,15 +2,18 @@
 
 namespace App\Models\Shop;
 
+use App\Models\BaseRecyclableModel;
 use Database\Factories\Shop\PaymentFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Payment extends Model
+class Payment extends BaseRecyclableModel
 {
     /** @use HasFactory<PaymentFactory> */
     use HasFactory;
+
+    use SoftDeletes;
 
     protected $table = 'shop_payments';
 

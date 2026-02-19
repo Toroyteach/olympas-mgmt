@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('seo_description', 160)->nullable();
             $table->integer('sort')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

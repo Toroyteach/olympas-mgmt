@@ -2,16 +2,16 @@
 
 namespace App\Models\Shop;
 
+use App\Models\BaseRecyclableModel;
 use App\Enums\OrderStatus;
 use Database\Factories\Shop\OrderFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Order extends Model
+class Order extends BaseRecyclableModel
 {
     /** @use HasFactory<OrderFactory> */
     use HasFactory;

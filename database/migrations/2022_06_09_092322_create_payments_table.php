@@ -25,6 +25,8 @@ return new class extends Migration
             $table->string('currency');
 
             $table->timestamps();
+
+            $table->softDeletes();
         });
     }
 

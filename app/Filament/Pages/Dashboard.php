@@ -22,13 +22,38 @@ class Dashboard extends BaseDashboard
                         Select::make('businessCustomersOnly')
                             ->boolean(),
                         DatePicker::make('startDate')
-                            ->maxDate(fn (Get $get) => $get('endDate') ?: now()),
+                            ->maxDate(fn(Get $get) => $get('endDate') ?: now()),
                         DatePicker::make('endDate')
-                            ->minDate(fn (Get $get) => $get('startDate') ?: now())
+                            ->minDate(fn(Get $get) => $get('startDate') ?: now())
                             ->maxDate(now()),
                     ])
                     ->columns(3)
                     ->columnSpanFull(),
             ]);
+    }
+
+    public function getWidgets(): array
+    {
+        return [
+            // Tier 1: Key Stats (Full width top)
+            \App\Filament\Widgets\StatsOverviewWidget::class,
+
+            // Tier 2: Business Trends (Side-by-side charts)
+            \App\Filament\Widgets\OrdersChart::class,
+            \App\Filament\Widgets\CustomersChart::class,
+
+            \App\Filament\Widgets\LatestOrders::class,
+            // Tier 3: Operations (Tables usually look best taking more space)
+
+            // Tier 4: Specialized Data
+            \App\Filament\Widgets\AiImagesOverview::class,
+            \App\Filament\Widgets\SocialMediaOverview::class,
+            \App\Filament\Widgets\SocialPostsByPlatformChart::class,
+        ];
+    }
+
+    public function getColumns(): int | array
+    {
+        return 12;
     }
 }

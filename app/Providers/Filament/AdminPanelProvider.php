@@ -3,8 +3,10 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Auth\Login;
+use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use App\Filament\Pages\Dashboard;
 use App\Http\Middleware\Authenticate;
+use App\Livewire\MyCustomComponent;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
@@ -12,7 +14,6 @@ use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
-use Hexters\HexaLite\HexaLite;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -21,6 +22,7 @@ use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
+use Promethys\Revive\RevivePlugin;
 use Swis\Filament\Backgrounds\FilamentBackgroundsPlugin;
 
 class AdminPanelProvider extends PanelProvider
@@ -39,16 +41,20 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                AccountWidget::class
+                // AccountWidget::class
             ])
             ->unsavedChangesAlerts()
             ->brandLogo(fn() => view('filament.app.logo'))
+            ->viteTheme('resources/css/filament/admin/theme.css')
             ->brandLogoHeight('1.25rem')
             ->navigationGroups([
+                'Media',
                 'Shop',
+                'Settings',
             ])
             ->databaseNotifications()
             ->plugins([
+                FilamentShieldPlugin::make(),
                 FilamentBackgroundsPlugin::make()->showAttribution(false),
                 BreezyCore::make()
                     ->myProfile(
@@ -58,8 +64,22 @@ class AdminPanelProvider extends PanelProvider
                         navigationGroup: 'Settings', // Sets the navigation group for the My Profile page (default = null)
                         hasAvatars: false, // Enables the avatar upload form component (default = false)
                         slug: 'my-profile' // Sets the slug for the profile page (default = 'my-profile')
-                    ),
-                HexaLite::make(),
+                    )
+                    ->enableTwoFactorAuthentication(
+                        force: false, // force the user to enable 2FA before they can use the application (default = false)
+                        scopeToPanel: true, // scope the 2FA only to the current panel (default = true)
+                    )
+                    ->myProfileComponents([MyCustomComponent::class]),
+                RevivePlugin::make()
+                    ->authorize(fn () => auth()->user()?->isAdmin() ?? false) // Accepts a boolean or Closure to control access
+                    ->navigationGroup('Administration') // Group the page under a custom sidebar section
+                    ->navigationIcon('heroicon-o-archive-box-arrow-down')
+                    ->activeNavigationIcon('heroicon-o-archive-box-arrow-down')
+                    ->navigationSort(1)
+                    ->navigationLabel('Global Recycle Bin')
+                    ->title('All Deleted Items')
+                    ->slug('retrieve-bin')
+                    ->showAllRecords()
             ])
             ->middleware([
                 EncryptCookies::class,

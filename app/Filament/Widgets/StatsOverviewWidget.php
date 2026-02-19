@@ -2,10 +2,13 @@
 
 namespace App\Filament\Widgets;
 
-use Carbon\Carbon;
-use Filament\Widgets\Concerns\InteractsWithPageFilters;
+use App\Models\Shop\Customer;
+use App\Models\Shop\Order;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Number;
 
 class StatsOverviewWidget extends BaseWidget
@@ -14,58 +17,67 @@ class StatsOverviewWidget extends BaseWidget
 
     protected static ?int $sort = 0;
 
+    protected int | string | array $columnSpan = 12;
+
     protected function getStats(): array
     {
+        $startDate = filled($this->pageFilters['startDate'] ?? null)
+            ? Carbon::parse($this->pageFilters['startDate'])->startOfDay()
+            : now()->startOfMonth();
 
-        $startDate = ! is_null($this->pageFilters['startDate'] ?? null) ?
-            Carbon::parse($this->pageFilters['startDate']) :
-            null;
+        $endDate = filled($this->pageFilters['endDate'] ?? null)
+            ? Carbon::parse($this->pageFilters['endDate'])->endOfDay()
+            : now()->endOfDay();
 
-        $endDate = ! is_null($this->pageFilters['endDate'] ?? null) ?
-            Carbon::parse($this->pageFilters['endDate']) :
-            now();
+        $cacheKey = "stats_overview_{$startDate->timestamp}_{$endDate->timestamp}";
 
-        $isBusinessCustomersOnly = $this->pageFilters['businessCustomersOnly'] ?? null;
-        $businessCustomerMultiplier = match (true) {
-            boolval($isBusinessCustomersOnly) => 2 / 3,
-            blank($isBusinessCustomersOnly) => 1,
-            default => 1 / 3,
-        };
+        [$revenue, $newCustomers, $newOrders, $sparkRevenue, $sparkOrders] = Cache::remember($cacheKey, 300, function () use ($startDate, $endDate) {
+            $revenue = (float) Order::whereBetween('created_at', [$startDate, $endDate])
+                ->whereNotIn('status', ['cancelled'])
+                ->sum('total_price');
 
-        $diffInDays = $startDate ? $startDate->diffInDays($endDate) : 0;
+            $newCustomers = Customer::whereBetween('created_at', [$startDate, $endDate])->count();
 
-        $revenue = (int) (($startDate ? ($diffInDays * 137) : 192100) * $businessCustomerMultiplier);
-        $newCustomers = (int) (($startDate ? ($diffInDays * 7) : 1340) * $businessCustomerMultiplier);
-        $newOrders = (int) (($startDate ? ($diffInDays * 13) : 3543) * $businessCustomerMultiplier);
+            $newOrders = Order::whereBetween('created_at', [$startDate, $endDate])->count();
 
-        $formatNumber = function (int $number): string {
-            if ($number < 1000) {
-                return (string) Number::format($number, 0);
-            }
+            // 7-day sparkline going back from endDate
+            $sparkRevenue = collect(range(6, 0))->map(
+                fn($i) => (float) Order::whereDate('created_at', $endDate->copy()->subDays($i))
+                    ->whereNotIn('status', ['cancelled'])
+                    ->sum('total_price')
+            )->toArray();
 
-            if ($number < 1000000) {
-                return Number::format($number / 1000, 2) . 'k';
-            }
+            $sparkOrders = collect(range(6, 0))->map(
+                fn($i) => Order::whereDate('created_at', $endDate->copy()->subDays($i))->count()
+            )->toArray();
 
-            return Number::format($number / 1000000, 2) . 'm';
+            return [$revenue, $newCustomers, $newOrders, $sparkRevenue, $sparkOrders];
+        });
+
+        $fmt = function (float $n): string {
+            if ($n < 1000) return Number::format($n, 2);
+            if ($n < 1_000_000) return Number::format($n / 1000, 1) . 'k';
+            return Number::format($n / 1_000_000, 2) . 'm';
         };
 
         return [
-            Stat::make('Revenue', '$' . $formatNumber($revenue))
-                ->description('32k increase')
-                ->descriptionIcon('heroicon-m-arrow-trending-up')
-                ->chart([7, 2, 10, 3, 15, 4, 17])
+            Stat::make('Revenue', 'ksh' . $fmt($revenue))
+                ->description('Excl. cancelled orders')
+                ->descriptionIcon('heroicon-m-banknotes')
+                ->chart($sparkRevenue)
                 ->color('success'),
-            Stat::make('New customers', $formatNumber($newCustomers))
-                ->description('3% decrease')
-                ->descriptionIcon('heroicon-m-arrow-trending-down')
-                ->chart([17, 16, 14, 15, 14, 13, 12])
-                ->color('danger'),
-            Stat::make('New orders', $formatNumber($newOrders))
-                ->description('7% increase')
-                ->descriptionIcon('heroicon-m-arrow-trending-up')
-                ->chart([15, 4, 10, 2, 12, 4, 12])
-                ->color('success'),
+
+            Stat::make('New Customers', Number::format($newCustomers))
+                ->description('Registered in period')
+                ->descriptionIcon('heroicon-m-user-plus')
+                ->chart(array_fill(0, 7, $newCustomers / 7 ?: 0))
+                ->color('info'),
+
+            Stat::make('New Orders', Number::format($newOrders))
+                ->description('All statuses')
+                ->descriptionIcon('heroicon-m-shopping-cart')
+                ->chart($sparkOrders)
+                ->color('warning'),
         ];
     }
 }

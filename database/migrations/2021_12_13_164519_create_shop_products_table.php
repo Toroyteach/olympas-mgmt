@@ -55,6 +55,7 @@ return new class extends Migration
                 ->unsigned();
             $table->string('volume_unit')->default('l');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
