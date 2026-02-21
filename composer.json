@@ -18,6 +18,7 @@
         "guzzlehttp/guzzle": "^7.2",
         "hamzahassanm/laravel-social-auto-post": "^2.1",
         "jeffgreco13/filament-breezy": "^3.2",
+        "joaopaulolndev/filament-edit-profile": "^2.0",
         "laravel/ai": "*",
         "laravel/framework": "^12.0",
         "laravel/nightwatch": "^1.12",
@@ -26,7 +27,8 @@
         "promethys/revive": "^2.0",
         "squirephp/countries-en": "^3.3",
         "squirephp/currencies-en": "^3.3",
-        "swisnl/filament-backgrounds": "^2.0"
+        "swisnl/filament-backgrounds": "^2.0",
+        "yebor974/filament-renew-password": "^3.1"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.6",

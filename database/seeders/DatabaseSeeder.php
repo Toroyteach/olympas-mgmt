@@ -32,7 +32,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::raw('SET time_zone=\'+00:00\'');
+        DB::statement("SET time_zone='+00:00'");
 
         // Clear images
         Storage::deleteDirectory('public');

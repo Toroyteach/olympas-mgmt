@@ -16,6 +16,7 @@ return new class extends Migration
             $table->json('credentials')->nullable(); // encrypted JSON blob for tokens/keys
             $table->text('notes')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

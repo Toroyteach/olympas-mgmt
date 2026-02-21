@@ -35,6 +35,9 @@ class Dashboard extends BaseDashboard
     public function getWidgets(): array
     {
         return [
+            \App\Filament\Widgets\WarehouseStatsWidget::class,
+            \App\Filament\Widgets\LatestWarehouseEntriesWidget::class,
+
             // Tier 1: Key Stats (Full width top)
             \App\Filament\Widgets\StatsOverviewWidget::class,
 

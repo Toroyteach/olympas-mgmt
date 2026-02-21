@@ -3,8 +3,10 @@
 namespace App\Providers\Filament;
 
 use App\Filament\App\Pages\RegisterTeam;
+use App\Filament\Pages\Auth\EditProfile;
 use App\Filament\Pages\Auth\Login;
 use App\Models\Team;
+use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -17,6 +19,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Yebor974\Filament\RenewPassword\RenewPasswordPlugin;
 
 class AppPanelProvider extends PanelProvider
 {
@@ -28,6 +31,7 @@ class AppPanelProvider extends PanelProvider
             ->login(Login::class)
             ->registration()
             ->passwordReset()
+            ->plugin(new RenewPasswordPlugin())
             ->emailVerification()
             ->tenant(Team::class)
             ->tenantRegistration(RegisterTeam::class)

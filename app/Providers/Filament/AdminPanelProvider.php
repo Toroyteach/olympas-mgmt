@@ -2,18 +2,19 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Auth\EditProfile;
 use App\Filament\Pages\Auth\Login;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use App\Filament\Pages\Dashboard;
 use App\Http\Middleware\Authenticate;
 use App\Livewire\MyCustomComponent;
+use Filament\Actions\Action;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\MenuItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Widgets\AccountWidget;
-use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -24,6 +25,7 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Promethys\Revive\RevivePlugin;
 use Swis\Filament\Backgrounds\FilamentBackgroundsPlugin;
+use Yebor974\Filament\RenewPassword\RenewPasswordPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -33,6 +35,8 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->login(Login::class)
+            ->plugin(new RenewPasswordPlugin())
+            ->profile()
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\\Filament\\Clusters')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -44,7 +48,7 @@ class AdminPanelProvider extends PanelProvider
                 // AccountWidget::class
             ])
             ->unsavedChangesAlerts()
-            ->brandName('')
+            ->brandName(config('app.name'))
             ->brandLogo(fn() => view('filament.app.logo'))
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->brandLogoHeight('1.25rem')
@@ -55,7 +59,20 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->databaseNotifications()
             ->plugins([
-                FilamentShieldPlugin::make(),
+                FilamentShieldPlugin::make()
+                    ->navigationGroup('User Management')
+                    ->navigationSort(2)
+                    ->gridColumns([
+                        'default' => 1,
+                        'sm'      => 2,
+                        'lg'      => 3,
+                    ])
+                    ->sectionColumnSpan(1)
+                    ->checkboxListColumns([
+                        'default' => 1,
+                        'sm'      => 2,
+                        'lg'      => 4,
+                    ]),
                 FilamentBackgroundsPlugin::make()->showAttribution(false),
                 BreezyCore::make()
                     ->myProfile(
@@ -70,9 +87,14 @@ class AdminPanelProvider extends PanelProvider
                         force: false, // force the user to enable 2FA before they can use the application (default = false)
                         scopeToPanel: true, // scope the 2FA only to the current panel (default = true)
                     )
+                    ->passwordUpdateRules(
+                        rules: [\Illuminate\Validation\Rules\Password::default()->mixedCase()->min(8)],
+                        requiresCurrentPassword: true,
+                    )
+                    ->enableBrowserSessions()
                     ->myProfileComponents([MyCustomComponent::class]),
                 RevivePlugin::make()
-                    ->authorize(fn () => auth()->user()?->isAdmin() ?? false) // Accepts a boolean or Closure to control access
+                    ->authorize(fn() => auth()->user()?->isAdmin() ?? false) // Accepts a boolean or Closure to control access
                     ->navigationGroup('Administration') // Group the page under a custom sidebar section
                     ->navigationIcon('heroicon-o-archive-box-arrow-down')
                     ->activeNavigationIcon('heroicon-o-archive-box-arrow-down')
